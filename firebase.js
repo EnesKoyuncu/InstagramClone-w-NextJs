@@ -1,5 +1,5 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, collection } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -22,6 +22,9 @@ if (!getApps().length) {
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Mevcut koleksiyonlara ek olarak users koleksiyonunu ekleyeceğiz
+const usersRef = collection(db, "users");
+
 // Debug için config bilgilerini yazdıralım
 console.log("Firebase Config:", {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -31,4 +34,4 @@ console.log("Firebase Config:", {
 console.log("Firebase initialized with project:", app.options.projectId);
 console.log("Firestore initialized");
 
-export { app, db, storage };
+export { app, db, storage, usersRef };

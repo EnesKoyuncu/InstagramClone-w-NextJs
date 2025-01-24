@@ -1,100 +1,108 @@
 # Instagram Clone with Next.js
 
-A modern Instagram clone built with Next.js, Firebase, and TailwindCSS.
+Bu proje, modern web teknolojileri kullanılarak geliştirilmiş bir Instagram klonudur. Next.js, Firebase, Tailwind CSS ve diğer güçlü teknolojiler kullanılarak oluşturulmuştur.
 
-## Features
+## Özellikler
 
-- 🔐 Google Authentication
-- 📸 Create Posts
-- 💭 Comment on Posts
-- ❤️ Like Posts
-- 🎭 Responsive Design
-- 🚀 Real-time Updates
+- 🔐 Google ile Kimlik Doğrulama
+- 📸 Post Paylaşma
+- ❤️ Post Beğenme
+- 💬 Yorum Yapma
+- 👤 Profil Sayfası
+  - Profil Düzenleme
+  - Bio Ekleme/Düzenleme
+  - Post Grid Görünümü
+  - Post İstatistikleri (Beğeni ve Yorum Sayıları)
+- 🎨 Instagram Benzeri UI/UX
+- 🔄 Gerçek Zamanlı Güncellemeler
+- 😊 Emoji Desteği
+- 📱 Responsive Tasarım
 
-## Technologies Used
+## Teknolojiler
 
 - Next.js 14
-- Firebase 10
-- TailwindCSS
+- Firebase v9
 - NextAuth.js
 - Recoil
+- Tailwind CSS
 - Heroicons
+- Headless UI
+- React Moment
+- Emoji Picker React
 
-## Getting Started
+## Kurulum
 
-1. Clone the repository:
+1. Projeyi klonlayın:
 
 ```bash
-    git clone https://github.com/your-username/instagram-clone.git
+git clone https://github.com/[kullanıcı-adı]/InstagramClone-w-NextJs.git
 ```
 
-2. Install dependencies:
+2. Proje dizinine gidin:
+
+```bash
+cd InstagramClone-w-NextJs
+```
+
+3. Bağımlılıkları yükleyin:
 
 ```bash
 npm install
 ```
 
-3. Create a `.env.local` file in the root directory and add your environment variables (see `.env.example` for required variables)
+4. `.env.local` dosyası oluşturun ve gerekli environment variable'ları ekleyin:
 
-4. Set up Firebase:
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret
+```
 
-   - Create a new Firebase project
-   - Enable Google Authentication
-   - Create a Firestore Database
-   - Update Firestore Rules
-   - Add your Firebase config to `.env.local`
-
-5. Run the development server:
+5. Geliştirme sunucusunu başlatın:
 
 ```bash
 npm run dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Firebase Ayarları
 
-## Firebase Rules
-
-Add these rules to your Firebase Console:
+1. Firebase Console'da yeni bir proje oluşturun
+2. Authentication'da Google sign-in'i etkinleştirin
+3. Firestore Database'i oluşturun
+4. Storage'ı etkinleştirin
+5. Firestore kurallarını güncelleyin:
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /posts/{postId} {
-      allow read, write: if true;
-
-      match /comments/{commentId} {
-        allow read, write: if true;
-      }
-
-      match /likes/{likeId} {
-        allow read, write: if true;
-      }
+    match /{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
   }
 }
 ```
 
-## Environment Variables
+## Katkıda Bulunma
 
-See `.env.example` for required environment variables:
+1. Bu repository'yi fork edin
+2. Yeni bir branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Değişikliklerinizi commit edin (`git commit -m 'Add some amazing feature'`)
+4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
+5. Bir Pull Request oluşturun
 
-```plaintext
-# Google Auth
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-NEXTAUTH_URL=
-NEXTAUTH_SECRET=
+## Lisans
 
-# Firebase Config
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-```
+Bu proje MIT lisansı altında lisanslanmıştır. Daha fazla bilgi için `LICENSE` dosyasına bakın.
 
-## Contributing
+## İletişim
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Proje Linki: [https://github.com/[kullanıcı-adı]/InstagramClone-w-NextJs](https://github.com/[kullanıcı-adı]/InstagramClone-w-NextJs)
