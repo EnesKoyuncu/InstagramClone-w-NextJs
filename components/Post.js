@@ -1,124 +1,189 @@
-import React from 'react'
+import React, { useState, useEffect } from "react";
 import {
-    BookmarkIcon,
-    ChatIcon,
-    DotsHorizontalIcon,
-    EmojiHappyIcon,
-    HeartIcon,
-    PaperAirplaneIcon,
-} from "@heroicons/react/outline";
+  BookmarkIcon,
+  ChatBubbleOvalLeftIcon as ChatIcon,
+  EllipsisHorizontalIcon as DotsHorizontalIcon,
+  FaceSmileIcon as EmojiHappyIcon,
+  HeartIcon,
+  PaperAirplaneIcon,
+} from "@heroicons/react/24/outline";
+import { HeartIcon as HeartIconFilled } from "@heroicons/react/24/solid";
+import { useSession } from "next-auth/react";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
+import { db } from "../firebase";
+import Moment from "react-moment";
 
-import { 
-    collection,
-    serverTimestamp, 
-    addDoc, 
-    onSnapshot, 
-    orderBy, 
-    query 
-} from 'firebase/firestore';
+function Post({ id, username, userImg, img, caption }) {
+  const { data: session } = useSession();
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState([]);
+  const [likes, setLikes] = useState([]);
+  const [hasLiked, setHasLiked] = useState(false);
 
-import { HeartIcon as HeartIconFileed } from "@heroicons/react/solid";
-import { useSession } from 'next-auth/react';
-import { useState, useEffect } from "react";
-import { db } from '../firebase';
-import trim from "trim";
+  // Yorumları dinle
+  useEffect(() => {
+    if (!id) return;
 
+    return onSnapshot(
+      query(
+        collection(db, "posts", id, "comments"),
+        orderBy("timestamp", "desc")
+      ),
+      (snapshot) => setComments(snapshot.docs)
+    );
+  }, [db, id]);
 
-function Post({id , username, userImg, img, caption}) {
+  // Beğenileri dinle
+  useEffect(() => {
+    if (!id) return;
 
-    const {data : session } = useSession();
-    const [comment, setComment] = useState('');
-    const [comments, setComments] = useState([]);
-    console.log(typeof(comment));
-    console.log(comment);
-    useEffect(
-        () => onSnapshot(
-            query(collection(db,'posts', id , 'comments'),
-             orderBy('timestamp', 'desc')
-             ),
-              (snapshot) => setComment(snapshot.docs)
-              ),
-            [db]
-        )
+    return onSnapshot(collection(db, "posts", id, "likes"), (snapshot) =>
+      setLikes(snapshot.docs)
+    );
+  }, [db, id]);
 
+  // Kullanıcının postu beğenip beğenmediğini kontrol et
+  useEffect(() => {
+    if (session?.user?.email) {
+      setHasLiked(
+        likes.findIndex((like) => like.id === session?.user?.email) !== -1
+      );
+    }
+  }, [likes, session]);
 
-    const sendComment = async (e) => {
-        e.preventDefault();
+  // Beğenme işlemi
+  const likePost = async () => {
+    if (!session) return;
 
-        const commentToSend = comment;
-        setComment("");
-
-        await addDoc(collection(db, 'posts', id,
-         "comments"), {
-            comment : commentToSend,
-            username : session.user.username,
-            userImage : session.user.image,
-            timestamp : serverTimestamp(),
+    try {
+      if (hasLiked) {
+        await deleteDoc(doc(db, "posts", id, "likes", session.user.email));
+      } else {
+        await setDoc(doc(db, "posts", id, "likes", session.user.email), {
+          username: session.user.name || session.user.username,
+          userEmail: session.user.email,
+          timestamp: serverTimestamp(),
         });
-    };
+      }
+    } catch (error) {
+      console.error("Error in likePost:", error);
+    }
+  };
 
-    const getComment = () => {
-        return comment; 
-    };
+  // Yorum gönderme
+  const sendComment = async (e) => {
+    e.preventDefault();
+
+    const commentToSend = comment;
+    setComment("");
+
+    await addDoc(collection(db, "posts", id, "comments"), {
+      comment: commentToSend,
+      username: session.user.username,
+      userImage: session.user.image,
+      timestamp: serverTimestamp(),
+    });
+  };
+
   return (
-    <div className='bg-white my-7 border rounded-sm'>
+    <div className="bg-white my-7 border rounded-sm">
+      {/* Header */}
+      <div className="flex items-center p-5">
+        <img
+          className="rounded-full h-12 w-12 object-contain border p-1 mr-3"
+          src={userImg}
+          alt={username}
+        />
+        <p className="flex-1 font-bold">{username}</p>
+        <DotsHorizontalIcon className="h-5" />
+      </div>
 
-        {/* Header */}
-        <div className='flex items-center p-5'>
-            <img className='rounded-full h-12 w-12 object-contain border p-1 mr-3' src={userImg} alt='' />
-            <p className='flex-1 font-bold'>{username}</p>
-            <DotsHorizontalIcon className='h-5' />
+      {/* Img */}
+      <img className="object-cover w-full" src={img} alt="" />
+
+      {/* Buttons */}
+      {session && (
+        <div className="flex justify-between px-4 pt-4">
+          <div className="flex space-x-4">
+            {hasLiked ? (
+              <HeartIconFilled
+                onClick={likePost}
+                className="btn text-red-500"
+              />
+            ) : (
+              <HeartIcon onClick={likePost} className="btn" />
+            )}
+            <ChatIcon className="btn" />
+            <PaperAirplaneIcon className="btn rotate-45" />
+          </div>
+          <BookmarkIcon className="btn" />
         </div>
-        {/* Img */}
-        <img className='object-cover 
-        w-full' src={img} alt='' />
+      )}
 
-        {/* Buttons */}
-        {session && (
-             <div className='flex justify-between px-4 pt-4'>
-            <div className='flex space-x-4'>
-                <HeartIcon className='btn' />
-                <ChatIcon className='btn' />
-                <PaperAirplaneIcon className='btn' />
+      {/* Caption */}
+      <p className="p-5 truncate">
+        {likes.length > 0 && (
+          <p className="font-bold mb-1">{likes.length} likes</p>
+        )}
+        <span className="font-bold mr-1">{username}</span>
+        {caption}
+      </p>
+
+      {/* Comments */}
+      {comments.length > 0 && (
+        <div className="ml-10 h-20 overflow-y-scroll scrollbar-thumb-black scrollbar-thin">
+          {comments.map((comment) => (
+            <div key={comment.id} className="flex items-center space-x-2 mb-3">
+              <img
+                className="h-7 rounded-full"
+                src={comment.data().userImage}
+                alt=""
+              />
+              <p className="text-sm flex-1">
+                <span className="font-bold">{comment.data().username}</span>{" "}
+                {comment.data().comment}
+              </p>
+              <Moment fromNow className="pr-5 text-xs">
+                {comment.data().timestamp?.toDate()}
+              </Moment>
             </div>
-
-            <BookmarkIcon className='btn'/>
+          ))}
         </div>
-        )}
-       
-        {/* caption */}
-        <p className='p-5 truncate'>
-            <span className='font-bold mr-1'>{username}</span>
-            {caption}
-        </p>
+      )}
 
-        {/* comments */}
-        
-
-        {/* input box  */}
-        {session && (
-             <form className='flex items-center p-4'>
-            <EmojiHappyIcon className="h-7"/>
-            <input 
-                type="text" 
-                value={comment}
-                onChange = {(e) => setComment(e.target.value)}
-                placeholder='Add a comment...'
-                className='border-none flex-1 focus:ring-0 outline-none'
-            />
-            <button 
-            type="submit" 
-            disabled = {!comment} 
-            onClick = {sendComment}
-            className='font-semibold text-blue-400'
-            >
+      {/* Input box */}
+      {session && (
+        <form className="flex items-center p-4">
+          <EmojiHappyIcon className="h-7" />
+          <input
+            type="text"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Add a comment..."
+            className="border-none flex-1 focus:ring-0 outline-none"
+          />
+          <button
+            type="submit"
+            disabled={!comment.trim()}
+            onClick={sendComment}
+            className="font-semibold text-blue-400"
+          >
             Post
-            </button>
+          </button>
         </form>
-        )}
-       
+      )}
     </div>
-  )
+  );
 }
 
-export default Post
+export default Post;

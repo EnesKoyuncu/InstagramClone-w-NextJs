@@ -1,7 +1,7 @@
 import { useRecoilState } from "recoil";
 import { modalState } from "../atoms/modalAtom";
 import { Dialog, Transition } from "@headlessui/react";
-import { CameraIcon } from "@heroicons/react/outline";
+import { CameraIcon } from "@heroicons/react/24/outline";
 import { Fragment, useRef, useState } from "react";
 import { db, storage } from "../firebase";
 import {
@@ -25,25 +25,28 @@ function Modal() {
 
     setLoading(true);
 
-    const docRef = await addDoc(collection(db, "posts"), {
-      username: session.user.username,
-      caption: captionRef.current.value,
-      profileImg: session.user.image,
-      timestamp: serverTimestamp(),
-    });
+    try {
+      const docRef = await addDoc(collection(db, "posts"), {
+        username: session.user.username,
+        caption: captionRef.current.value,
+        profileImg: session.user.image,
+        timestamp: serverTimestamp(),
+      });
 
-    console.log("New doc added with ID", docRef.id);
+      console.log("New doc added with ID", docRef.id);
 
-    const imageRef = ref(storage, `posts/${docRef.id}/image`);
+      const imageRef = ref(storage, `posts/${docRef.id}/image`);
+      await uploadString(imageRef, selectedFile, "data_url");
+      const downloadURL = await getDownloadURL(imageRef);
 
-    await uploadString(imageRef, selectedFile, "data_url").then(
-      async (snapshot) => {
-        const downloadURL = await getDownloadURL(imageRef);
-        await updateDoc(doc(db, "posts", docRef.id), {
-          image: downloadURL,
-        });
-      }
-    );
+      await updateDoc(doc(db, "posts", docRef.id), {
+        image: downloadURL,
+      });
+
+      console.log("Post successfully uploaded!");
+    } catch (error) {
+      console.error("Error uploading post:", error);
+    }
 
     setOpen(false);
     setLoading(false);
@@ -61,7 +64,7 @@ function Modal() {
     };
 
     const getComment = () => {
-        return comment; 
+      return comment;
     };
   };
 
