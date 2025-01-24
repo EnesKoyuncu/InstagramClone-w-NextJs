@@ -91,13 +91,25 @@ service cloud.firestore {
 }
 ```
 
+## Kullanım
+
+1. Google hesabınızla giriş yapın
+2. Profil sayfanızı düzenleyin
+3. Fotoğraf paylaşın:
+   - Tek veya çoklu fotoğraf seçin
+   - Konum ekleyin
+   - Hashtag'ler ekleyin
+   - Kişileri etiketleyin
+4. Paylaşılan gönderileri beğenin ve yorum yapın
+5. Profil sayfanızdan paylaşımlarınızı görüntüleyin
+
 ## Katkıda Bulunma
 
-1. Bu repository'yi fork edin
-2. Yeni bir branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Değişikliklerinizi commit edin (`git commit -m 'Add some amazing feature'`)
-4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
-5. Bir Pull Request oluşturun
+1. Bu repoyu fork edin
+2. Yeni bir branch oluşturun (`git checkout -b feature/amazing`)
+3. Değişikliklerinizi commit edin (`git commit -m 'Add amazing feature'`)
+4. Branch'inizi push edin (`git push origin feature/amazing`)
+5. Pull Request oluşturun
 
 ## Lisans
 

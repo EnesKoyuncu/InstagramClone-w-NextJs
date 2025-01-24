@@ -2,7 +2,16 @@
 module.exports = {
   reactStrictMode: true,
   images: {
-    domains: ["links.papareact.com", "i.pravatar.cc"],
+    domains: [
+      "links.papareact.com",
+      "i.pravatar.cc",
+      "lh3.googleusercontent.com",
+    ], // Google profil resimleri için
+  },
+  // Vercel için ek optimizasyonlar
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
   },
   // Fast Refresh sorununu çözmek için
   webpack: (config) => {

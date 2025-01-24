@@ -3,6 +3,5 @@
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
   "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js",
-  "/profile/[userId]": "pages/profile/[userId].js",
-  "/auth/signin": "pages/auth/signin.js"
+  "/profile/[userId]": "pages/profile/[userId].js"
 }
