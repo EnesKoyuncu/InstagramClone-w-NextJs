@@ -23,12 +23,23 @@ import {
 import { db } from "../firebase";
 import Moment from "react-moment";
 
-function Post({ id, username, userImg, img, caption }) {
+function Post({
+  id,
+  username,
+  userImg,
+  img,
+  images,
+  caption,
+  location,
+  hashtags,
+  taggedUsers,
+}) {
   const { data: session } = useSession();
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
   const [likes, setLikes] = useState([]);
   const [hasLiked, setHasLiked] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Yorumları dinle
   useEffect(() => {
@@ -52,16 +63,23 @@ function Post({ id, username, userImg, img, caption }) {
     );
   }, [db, id]);
 
-  // Kullanıcının postu beğenip beğenmediğini kontrol et
+  // Kullanıcının beğenip beğenmediğini kontrol et
   useEffect(() => {
-    if (session?.user?.email) {
-      setHasLiked(
-        likes.findIndex((like) => like.id === session?.user?.email) !== -1
-      );
-    }
+    setHasLiked(
+      likes.findIndex((like) => like.id === session?.user?.email) !== -1
+    );
   }, [likes, session]);
 
-  // Beğenme işlemi
+  // Resimleri önceden yükle
+  useEffect(() => {
+    if (images && images.length > 1) {
+      images.forEach((url) => {
+        const img = new Image();
+        img.src = url;
+      });
+    }
+  }, [images]);
+
   const likePost = async () => {
     if (!session) return;
 
@@ -80,7 +98,6 @@ function Post({ id, username, userImg, img, caption }) {
     }
   };
 
-  // Yorum gönderme
   const sendComment = async (e) => {
     e.preventDefault();
 
@@ -95,6 +112,21 @@ function Post({ id, username, userImg, img, caption }) {
     });
   };
 
+  // Resim geçiş fonksiyonlarını optimize et
+  const nextImage = () => {
+    if (images && images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (images && images.length > 1) {
+      setCurrentImageIndex(
+        (prev) => (prev - 1 + images.length) % images.length
+      );
+    }
+  };
+
   return (
     <div className="bg-white my-7 border rounded-sm">
       {/* Header */}
@@ -104,12 +136,85 @@ function Post({ id, username, userImg, img, caption }) {
           src={userImg}
           alt={username}
         />
-        <p className="flex-1 font-bold">{username}</p>
+        <div className="flex-1">
+          <p className="font-bold">{username}</p>
+          {location && <p className="text-xs text-gray-500">{location}</p>}
+        </div>
         <DotsHorizontalIcon className="h-5" />
       </div>
 
-      {/* Img */}
-      <img className="object-cover w-full" src={img} alt="" />
+      {/* Images - Optimize edildi */}
+      <div className="relative bg-black">
+        <div className="flex items-center justify-center">
+          <img
+            src={images ? images[currentImageIndex] : img}
+            className="max-w-full w-auto max-h-[600px] object-contain"
+            alt=""
+            loading="eager"
+          />
+        </div>
+
+        {/* Çoklu resim navigasyonu */}
+        {images && images.length > 1 && (
+          <>
+            {/* Gezinme noktaları */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-10">
+              {images.map((_, index) => (
+                <div
+                  key={index}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`w-2 h-2 rounded-full cursor-pointer transition-all
+                    ${
+                      index === currentImageIndex ? "bg-white" : "bg-white/50"
+                    }`}
+                />
+              ))}
+            </div>
+
+            {/* İleri/geri butonları */}
+            <button
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 
+                bg-black/50 text-white rounded-full p-2 hover:bg-black/75 z-10"
+              onClick={prevImage}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 19.5L8.25 12l7.5-7.5"
+                />
+              </svg>
+            </button>
+            <button
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 
+                bg-black/50 text-white rounded-full p-2 hover:bg-black/75 z-10"
+              onClick={nextImage}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                />
+              </svg>
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Buttons */}
       {session && (
@@ -130,14 +235,24 @@ function Post({ id, username, userImg, img, caption }) {
         </div>
       )}
 
-      {/* Caption */}
-      <p className="p-5 truncate">
+      {/* Caption ve Hashtags */}
+      <div className="p-5">
         {likes.length > 0 && (
           <p className="font-bold mb-1">{likes.length} likes</p>
         )}
-        <span className="font-bold mr-1">{username}</span>
-        {caption}
-      </p>
+        <p className="truncate">
+          <span className="font-bold mr-1">{username}</span>
+          {caption}
+        </p>
+        {hashtags && hashtags.length > 0 && (
+          <p className="text-blue-500 text-sm mt-1">{hashtags.join(" ")}</p>
+        )}
+        {taggedUsers && taggedUsers.length > 0 && (
+          <p className="text-sm text-gray-500 mt-1">
+            with {taggedUsers.join(", ")}
+          </p>
+        )}
+      </div>
 
       {/* Comments */}
       {comments.length > 0 && (

@@ -12,6 +12,7 @@ import {
   setDoc,
   serverTimestamp,
   onSnapshot,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import ProfileEditModal from "../../components/ProfileEditModal";
@@ -62,24 +63,29 @@ export default function ProfilePage() {
         }
       };
 
-      // Kullanıcının gönderilerini getir - email ile eşleştirme yapıyoruz
+      // Kullanıcının gönderilerini getir
       const fetchUserPosts = async () => {
         try {
           console.log("Fetching posts for user:", userId);
           const q = query(
             collection(db, "posts"),
-            where("email", "==", userId) // username yerine email ile sorgulama
+            where("email", "==", userId),
+            orderBy("timestamp", "desc")
           );
-          const querySnapshot = await getDocs(q);
-          console.log("Found posts:", querySnapshot.docs.length);
 
-          const posts = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
+          const unsubscribe = onSnapshot(q, (snapshot) => {
+            const posts = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+              // Geriye uyumluluk için
+              image: doc.data().images
+                ? doc.data().images[0]
+                : doc.data().image,
+            }));
+            setUserPosts(posts);
+          });
 
-          console.log("Processed posts:", posts);
-          setUserPosts(posts);
+          return () => unsubscribe();
         } catch (error) {
           console.error("Error fetching posts:", error);
         }
@@ -198,23 +204,47 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Posts Grid - Daha küçük ve aşağıda */}
+          {/* Posts Grid */}
           <div className="grid grid-cols-3 gap-1 mt-16 mx-4 mb-8">
             {userPosts.map((post) => (
               <div
                 key={post.id}
-                className="relative aspect-square group cursor-pointer max-w-[300px]"
+                className="relative aspect-square group cursor-pointer bg-black"
                 onClick={() => {
                   setSelectedPost(post);
                   setIsPostModalOpen(true);
                 }}
               >
-                <img
-                  src={post.image}
-                  alt={post.caption}
-                  className="object-cover w-full h-full rounded-sm"
-                />
-                {/* Hover overlay - güncellendi */}
+                {/* Çoklu resim göstergesi */}
+                {post.images && post.images.length > 1 && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="white"
+                      className="w-6 h-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3A2.25 2.25 0 0119.5 9v.878m0 0a2.246 2.246 0 00-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0121 12v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6c0-.98.626-1.813 1.5-2.122"
+                      />
+                    </svg>
+                  </div>
+                )}
+
+                {/* Post resmi */}
+                <div className="w-full h-full flex items-center justify-center">
+                  <img
+                    src={post.images ? post.images[0] : post.image}
+                    alt={post.caption}
+                    className="max-w-full max-h-full w-auto h-auto object-contain"
+                  />
+                </div>
+
+                {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-center justify-center space-x-8">
                   <div className="hidden group-hover:flex items-center text-white">
                     <HeartIcon className="h-8 w-8" />

@@ -1,12 +1,6 @@
 import Post from "./Post";
 import { useState, useEffect } from "react";
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  getDocs,
-} from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "../firebase";
 
 function Posts() {
@@ -17,32 +11,22 @@ function Posts() {
       try {
         console.log("Fetching posts...");
         const postsRef = collection(db, "posts");
-
-        // Önce normal getDocs ile deneyelim
-        const querySnapshot = await getDocs(postsRef);
-        console.log("Direct query result:", querySnapshot.docs.length);
-
-        // Sonra realtime listener ekleyelim
         const q = query(postsRef, orderBy("timestamp", "desc"));
 
-        const unsubscribe = onSnapshot(
-          q,
-          (snapshot) => {
-            console.log(
-              "Snapshot received:",
-              snapshot.docs.length,
-              "documents"
-            );
-            const postsData = snapshot.docs.map((doc) => ({
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          console.log("Snapshot received:", snapshot.docs.length, "documents");
+          const postsData = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            console.log("Post data:", data); // Debug için
+            return {
               id: doc.id,
-              ...doc.data(),
-            }));
-            setPosts(postsData);
-          },
-          (error) => {
-            console.error("Snapshot error:", error);
-          }
-        );
+              ...data,
+              // Geriye uyumluluk için
+              image: data.images ? data.images[0] : data.image,
+            };
+          });
+          setPosts(postsData);
+        });
 
         return () => unsubscribe();
       } catch (error) {
@@ -64,7 +48,11 @@ function Posts() {
           username={post.username}
           userImg={post.profileImg}
           img={post.image}
+          images={post.images}
           caption={post.caption}
+          location={post.location}
+          hashtags={post.hashtags}
+          taggedUsers={post.taggedUsers}
         />
       ))}
     </div>

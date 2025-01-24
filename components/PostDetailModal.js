@@ -31,6 +31,7 @@ function PostDetailModal({ isOpen, setIsOpen, post }) {
   const [hasLiked, setHasLiked] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   const commentInputRef = useRef(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Yorumları dinle
   useEffect(() => {
@@ -127,6 +128,31 @@ function PostDetailModal({ isOpen, setIsOpen, post }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showEmojis]);
 
+  // Resimleri önceden yükle
+  useEffect(() => {
+    if (post?.images && post.images.length > 1) {
+      post.images.forEach((url) => {
+        const img = new Image();
+        img.src = url;
+      });
+    }
+  }, [post?.images]);
+
+  // Resim geçiş fonksiyonları
+  const nextImage = () => {
+    if (post?.images && post.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % post.images.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (post?.images && post.images.length > 1) {
+      setCurrentImageIndex(
+        (prev) => (prev - 1 + post.images.length) % post.images.length
+      );
+    }
+  };
+
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
@@ -166,12 +192,81 @@ function PostDetailModal({ isOpen, setIsOpen, post }) {
             <div className="inline-block align-bottom bg-white rounded-xl overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full">
               <div className="flex h-[90vh] max-h-[90vh]">
                 {/* Sol taraf - Resim */}
-                <div className="flex-grow w-[60%] bg-black flex items-center">
-                  <img
-                    src={post?.image}
-                    className="object-contain w-full h-full"
-                    alt={post?.caption}
-                  />
+                <div className="flex-grow w-[60%] bg-black flex items-center relative">
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <img
+                      src={
+                        post?.images
+                          ? post.images[currentImageIndex]
+                          : post?.image
+                      }
+                      className="max-w-full max-h-full w-auto h-auto object-contain"
+                      alt={post?.caption}
+                    />
+
+                    {/* Çoklu resim navigasyonu */}
+                    {post?.images && post.images.length > 1 && (
+                      <>
+                        {/* Gezinme noktaları */}
+                        <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-10">
+                          {post.images.map((_, index) => (
+                            <div
+                              key={index}
+                              onClick={() => setCurrentImageIndex(index)}
+                              className={`w-2 h-2 rounded-full cursor-pointer transition-all
+                                ${
+                                  index === currentImageIndex
+                                    ? "bg-white"
+                                    : "bg-white/50"
+                                }`}
+                            />
+                          ))}
+                        </div>
+
+                        {/* İleri/geri butonları */}
+                        <button
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 
+                            bg-black/50 text-white rounded-full p-2 hover:bg-black/75 z-10"
+                          onClick={prevImage}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                            className="w-6 h-6"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15.75 19.5L8.25 12l7.5-7.5"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 
+                            bg-black/50 text-white rounded-full p-2 hover:bg-black/75 z-10"
+                          onClick={nextImage}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                            className="w-6 h-6"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                            />
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* Sağ taraf - Detaylar */}
